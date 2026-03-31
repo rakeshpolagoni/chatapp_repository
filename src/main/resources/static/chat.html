@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Broadcast Chat</title>
+</head>
+<body>
+
+<h2>Public Chat</h2>
+
+<input id="sender" placeholder="Your name"/>
+<input id="message" placeholder="Message"/>
+<button onclick="sendMessage()">Send</button>
+
+<ul id="messages"></ul>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+
+<script>
+let socket = new SockJS("/chat");
+let stompClient = Stomp.over(socket);
+
+stompClient.connect({}, function () {
+    console.log("Connected");
+
+    // subscribe to broadcast
+    stompClient.subscribe("/topic/messages", function (msg) {
+        let data = JSON.parse(msg.body);
+
+        let li = document.createElement("li");
+        li.textContent = data.sender + ": " + data.content;
+
+        document.getElementById("messages").appendChild(li);
+    });
+});
+
+function sendMessage() {
+    let sender = document.getElementById("sender").value;
+    let content = document.getElementById("message").value;
+
+    stompClient.send("/app/sendMessage", {}, JSON.stringify({
+        sender: sender,
+        content: content
+    }));
+}
+</script>
+
+</body>
+</html>
